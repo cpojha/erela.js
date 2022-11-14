@@ -3,29 +3,31 @@
     <hr>
     <br>
     <a href="https://discord.gg/menudocs">
-<img src="https://img.shields.io/discord/416512197590777857?color=7289DA&label=Support&logo=discord&style=for-the-badge" alt="Discord">
-</a>
-
-<a href="https://www.npmjs.com/package/erela.js">
-<img src="https://img.shields.io/npm/dw/erela.js?color=CC3534&logo=npm&style=for-the-badge" alt="Downloads">
-</a>
-
-<a href="https://www.npmjs.com/package/erela.js">
-<img src="https://img.shields.io/npm/v/erela.js?color=red&label=Version&logo=npm&style=for-the-badge" alt="Npm version">
-</a>
-
-<br>
-
-<a href="https://github.com/MenuDocs/erela.js">
-<img src="https://img.shields.io/github/stars/MenuDocs/erela.js?color=333&logo=github&style=for-the-badge" alt="Github stars">
-</a>
-
-<a href="https://github.com/MenuDocs/erela.js/blob/master/LICENSE">
-<img src="https://img.shields.io/github/license/MenuDocs/erela.js?color=6e5494&logo=github&style=for-the-badge" alt="License">
-</a>
-<hr>
+        <img src="https://img.shields.io/discord/416512197590777857?color=7289DA&label=Support&logo=discord&style=for-the-badge" alt="Discord">
+    </a>
+    <!--<a href="https://www.npmjs.com/package/erela.js">
+        <img src="https://img.shields.io/npm/dw/erela.js?color=CC3534&logo=npm&style=for-the-badge" alt="Downloads">
+    </a>
+    <a href="https://www.npmjs.com/package/erela.js">
+        <img src="https://img.shields.io/npm/v/erela.js?color=red&label=Version&logo=npm&style=for-the-badge" alt="Npm version">
+    </a>
+    <br>-->
+    <a href="https://github.com/MenuDocs/erela.js">
+        <img src="https://img.shields.io/github/stars/MenuDocs/erela.js?color=333&logo=github&style=for-the-badge" alt="Github stars">
+    </a>
+    <a href="https://github.com/MenuDocs/erela.js/blob/master/LICENSE">
+        <img src="https://img.shields.io/github/license/MenuDocs/erela.js?color=6e5494&logo=github&style=for-the-badge" alt="License">
+    </a>
+    <hr>
 </div>
 
+## Archived
+
+Due to a growing concern about the status of Music Bots on Discord and a lack of motivation from the team, we have decided to archive Erela and drop support for it entirely.
+
+We recommend to use another lavalink client and not a fork, you can find another one [here](https://github.com/freyacodes/lavalink#client-libraries).
+
+<!--
 > Erela was transferred to MenuDocs, because I no longer wish to work with Discord related development. It will from now on be maintained by [MenuDocs](https://github.com/MenuDocs). ~ @Solaris9
 
 ## Documentation & Guides
@@ -58,7 +60,7 @@ npm install erela.js
 yarn add erela.js
 ```
 
-**Note**: _Node **v14** is required!_
+**Note**: _Node **v16** is required!_
 
 ## Getting Started
 
@@ -69,15 +71,6 @@ yarn add erela.js
 ## Example usage
 
 Please read the guides to start: <https://erelajs-docs.netlify.app/docs/gettingstarted.html#example-usage>
-
-## Plugins
-
-You can use plugins below to extend Erela.js' features easily.
-
-Note: These are the only ones shown before being published, check the GitHub repository for a complete list.
-
-- [erela.js-spotify](https://github.com/MenuDocs/erela.js-spotify) - Converts a Spotify URL into a UnresolvedTrack to play later.
-
 
 ## Contributors
 
@@ -92,7 +85,13 @@ Note: These are the only ones shown before being published, check the GitHub rep
 - Contributor
 - Github: [@Anish-Shobith](https://github.com/Anish-Shobith)
 
+👤 **melike2d**
+
+- Contributor
+- Github: [@melike2d](https://github.com/melike2d)
+
 👤 **ayntee**
 
 - Contributor
 - Github: [@ayntee](https://github.com/ayntee)
+--!>

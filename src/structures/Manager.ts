@@ -1,5 +1,5 @@
 /* eslint-disable no-async-promise-executor */
-import Collection from "@discordjs/collection";
+import { Collection } from "@discordjs/collection";
 import { EventEmitter } from "events";
 import { VoiceState } from "..";
 import { Node, NodeOptions } from "./Node";
@@ -19,7 +19,7 @@ import {
   WebSocketClosedEvent,
 } from "./Utils";
 
-const TEMPLATE = JSON.stringify(["event", "guildId", "op", "sessionId"]);
+const REQUIRED_KEYS = ["event", "guildId", "op", "sessionId"];
 
 function check(options: ManagerOptions) {
   if (!options) throw new TypeError("ManagerOptions must not be empty.");
@@ -157,6 +157,15 @@ export interface Manager {
   ): this;
 
   /**
+   * Emitted when a player is disconnected from it's current voice channel.
+   * @event Manager#playerDisconnect
+   */
+  on(
+    event: "playerDisconnect",
+    listener: (player: Player, oldChannel: string) => void
+  ): this;
+
+  /**
    * Emitted when a track starts.
    * @event Manager#trackStart
    */
@@ -211,6 +220,12 @@ export interface Manager {
  * @noInheritDoc
  */
 export class Manager extends EventEmitter {
+  public static readonly DEFAULT_SOURCES: Record<SearchPlatform, string> = {
+    "youtube music": "ytmsearch",
+    "youtube": "ytsearch",
+    "soundcloud": "scsearch"
+  }
+
   /** The map of players. */
   public readonly players = new Collection<string, Player>();
   /** The map of nodes. */
@@ -299,7 +314,13 @@ export class Manager extends EventEmitter {
         '"clientId" is not set. Pass it in Manager#init() or as a option in the constructor.'
       );
 
-    for (const node of this.nodes.values()) node.connect();
+    for (const node of this.nodes.values()) {
+      try {
+        node.connect();
+      } catch (err) {
+        this.emit("nodeError", node, err);
+      }
+    }
 
     this.initiated = true;
     return this;
@@ -319,24 +340,17 @@ export class Manager extends EventEmitter {
       const node = this.leastUsedNodes.first();
       if (!node) throw new Error("No available nodes.");
 
-      const sources = {
-        soundcloud: "sc",
-        youtube: "yt",
-        "youtube music": "ytm"
-      };
+      const _query: SearchQuery = typeof query === "string" ? { query } : query;
+      const _source = Manager.DEFAULT_SOURCES[_query.source ?? this.options.defaultSearchPlatform] ?? _query.source;
 
-      const source = sources[(query as SearchQuery).source ?? this.options.defaultSearchPlatform];
-      let search = (query as SearchQuery).query || (query as string);
-
+      let search = _query.query;
       if (!/^https?:\/\//.test(search)) {
-        search = `${source}search:${search}`;
+        search = `${_source}:${search}`;
       }
 
-      const res = await node.makeRequest<LavalinkResult>(`/loadtracks?identifier=${encodeURIComponent(search)}`, r => {
-        if (node.options.requestTimeout) {
-          r.timeout(node.options.requestTimeout)
-        }
-      }).catch(err => reject(err));
+      const res = await node
+        .makeRequest<LavalinkResult>(`/loadtracks?identifier=${encodeURIComponent(search)}`)
+        .catch(err => reject(err));
 
       if (!res) {
         return reject(new Error("Query not found."));
@@ -345,9 +359,9 @@ export class Manager extends EventEmitter {
       const result: SearchResult = {
         loadType: res.loadType,
         exception: res.exception ?? null,
-        tracks: res.tracks.map((track: TrackData) =>
+        tracks: res.tracks?.map((track: TrackData) =>
           TrackUtils.build(track, requester)
-        ),
+        ) ?? [],
       };
 
       if (result.loadType === "PLAYLIST_LOADED") {
@@ -376,9 +390,12 @@ export class Manager extends EventEmitter {
       const node = this.nodes.first();
       if (!node) throw new Error("No available nodes.");
 
-      const res = await node.makeRequest<TrackData[]>(`/decodetracks`, r => r
-        .method("POST")
-        .body(tracks, "json"))
+      const res = await node.makeRequest<TrackData[]>(`/decodetracks`, r => {
+        r.method = "POST";
+        r.body = JSON.stringify(tracks);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        r.headers!["Content-Type"] = "application/json";
+      })
         .catch(err => reject(err));
 
       if (!res) {
@@ -462,24 +479,35 @@ export class Manager extends EventEmitter {
     const player = this.players.get(update.guild_id) as Player;
     if (!player) return;
 
-    const state = player.voiceState;
     if ("token" in update) {
-      state.op = "voiceUpdate";
-      state.guildId = update.guild_id;
-      state.event = update;
+      /* voice server update */
+      player.voiceState.event = update;
     } else {
-      if (update.user_id !== this.options.clientId) return;
-      state.sessionId = update.session_id;
-      if (player.voiceChannel !== update.channel_id) {
-        this.emit("playerMove", player, player.voiceChannel, update.channel_id);
-        update.channel_id = player.voiceChannel;
+      /* voice state update */
+      if (update.user_id !== this.options.clientId) {
+        return;      
+      }
+
+      if (update.channel_id) {
+        if (player.voiceChannel !== update.channel_id) {
+          /* we moved voice channels. */
+          this.emit("playerMove", player, player.voiceChannel, update.channel_id);
+        }
+
+        player.voiceState.sessionId = update.session_id;
+        player.voiceChannel = update.channel_id;
+      } else {
+        /* player got disconnected. */
+        this.emit("playerDisconnect", player, player.voiceChannel);
+        player.voiceChannel = null;
+        player.voiceState = Object.assign({});
         player.pause(true);
       }
     }
 
-    player.voiceState = state;
-    if (JSON.stringify(Object.keys(state).sort()) === TEMPLATE)
-      player.node.send(state);
+    if (REQUIRED_KEYS.every(key => key in player.voiceState)) {
+      player.node.send(player.voiceState);
+    }
   }
 }
 
@@ -523,7 +551,7 @@ export type SearchPlatform = "youtube" | "youtube music" | "soundcloud";
 
 export interface SearchQuery {
   /** The source to search from. */
-  source?: SearchPlatform;
+  source?: SearchPlatform | string;
   /** The query to search for. */
   query: string;
 }
